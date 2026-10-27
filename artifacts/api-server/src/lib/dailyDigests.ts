@@ -243,13 +243,14 @@ export async function sendDailyDigests(date = chicagoDate(new Date())): Promise<
   }
 }
 
-async function runScheduledJob(): Promise<void> {
+export async function runScheduledJob(): Promise<void> {
   const now = new Date();
   if (chicagoHour(now) < 7) return;
   const today = chicagoDate(now);
   const syncState = await readSyncState();
   if (syncState?.lastScheduledDate !== today) {
-    await syncChicagoPermits(3);
+    // A fresh database has nothing yet, so backfill two weeks the first time.
+    await syncChicagoPermits(syncState?.lastSyncAt ? 3 : 14);
     await markScheduledSync(today);
     logger.info({ scheduledDate: today }, "Morning Chicago permit refresh completed");
   }
