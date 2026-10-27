@@ -1,21 +1,23 @@
-import { ReplitConnectors } from "@replit/connectors-sdk";
-
-const connectors = new ReplitConnectors();
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not configured.`);
+  return value;
+}
 
 export async function stripeRequest<T>(
   path: string,
   fields?: Record<string, string>,
 ): Promise<T> {
-  const response = await connectors.proxy("stripe", path, {
+  const response = await fetch(`https://api.stripe.com${path}`, {
     method: fields ? "POST" : "GET",
-    ...(fields
-      ? {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams(fields).toString(),
-        }
-      : {}),
+    headers: {
+      Authorization: `Bearer ${requireEnv("STRIPE_SECRET_KEY")}`,
+      ...(fields
+        ? { "Content-Type": "application/x-www-form-urlencoded" }
+        : {}),
+    },
+    ...(fields ? { body: new URLSearchParams(fields).toString() } : {}),
+    signal: AbortSignal.timeout(20_000),
   });
   const body = await response.text();
   let payload: unknown = {};
@@ -47,9 +49,10 @@ export async function sendResendEmail(message: {
   text: string;
   idempotencyKey: string;
 }): Promise<void> {
-  const response = await connectors.proxy("resend", "/emails", {
+  const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
+      Authorization: `Bearer ${requireEnv("RESEND_API_KEY")}`,
       "Content-Type": "application/json",
       "Idempotency-Key": message.idempotencyKey,
     },
@@ -60,6 +63,7 @@ export async function sendResendEmail(message: {
       html: message.html,
       text: message.text,
     }),
+    signal: AbortSignal.timeout(20_000),
   });
   const body = await response.text();
   if (!response.ok) {

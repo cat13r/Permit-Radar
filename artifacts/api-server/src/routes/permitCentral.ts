@@ -37,7 +37,8 @@ import {
 import { stripeRequest } from "../lib/providerClients";
 
 const router: IRouter = Router();
-const MONTHLY_PRICE_ID = "price_1UVD2xGoTvMYeWlARuNu3BeR";
+const MONTHLY_PRICE_ID =
+  process.env.STRIPE_PRICE_ID ?? "price_1UVD2xGoTvMYeWlARuNu3BeR";
 const ACTIVE_SUBSCRIPTION_STATES = new Set(["active", "trialing"]);
 
 type StripeSubscription = {
@@ -147,10 +148,19 @@ function permitResponse(
   };
 }
 
-function appOrigin(): string {
-  const domain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
-  if (domain) return `https://${domain}`;
-  return "http://localhost";
+// Where Stripe sends people back to. APP_URL pins it (e.g. a custom domain);
+// otherwise use the host the request came in on, so preview deployments
+// return to themselves.
+function appOrigin(req: Request): string {
+  const configured = process.env.APP_URL?.trim().replace(/\/+$/, "");
+  if (configured) return configured;
+  const forwardedHost = req.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || req.get("host");
+  if (!host) return "http://localhost";
+  const proto =
+    req.get("x-forwarded-proto")?.split(",")[0]?.trim() ||
+    (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
 }
 
 function chicagoDayStartUtc(): Date {
@@ -444,7 +454,7 @@ router.post("/billing/checkout", async (req, res): Promise<void> => {
         .set({ stripeCustomerId: customerId })
         .where(eq(contractorPreferences.clerkUserId, userId));
     }
-    const origin = appOrigin();
+    const origin = appOrigin(req);
     const checkout = await stripeRequest<{ url?: string }>(
       "/v1/checkout/sessions",
       {
@@ -480,7 +490,7 @@ router.post("/billing/portal", async (req, res): Promise<void> => {
       "/v1/billing_portal/sessions",
       {
         customer: preferences.stripeCustomerId,
-        return_url: `${appOrigin()}/settings`,
+        return_url: `${appOrigin(req)}/settings`,
       },
     );
     if (!portal.url) throw new Error("Stripe did not return a portal URL.");
