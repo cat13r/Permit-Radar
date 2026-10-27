@@ -96,7 +96,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <span className="brand">
       <span className="brand-mark"><Hammer aria-hidden="true" /></span>
-      {!compact && <span>Permit Central</span>}
+      {!compact && <span>permitnative</span>}
     </span>
   );
 }
@@ -106,7 +106,7 @@ function Header() {
   const { signOut } = useClerk();
   return (
     <header className="topbar">
-      <Link href="/" className="brand" aria-label="Permit Central home"><Brand /></Link>
+      <Link href="/" className="brand" aria-label="permitnative home"><Brand /></Link>
       <div className="topbar-right">
         {user && <span className="user-tag" data-testid="text-account-email">{user.primaryEmailAddress?.emailAddress}</span>}
         <Show when="signed-in">
@@ -144,7 +144,7 @@ function LandingPage() {
         </div>
         <div className="permit-art" aria-label="Illustrated building permit blueprint">
           <div className="blueprint">
-            <div className="blueprint-kicker"><span>Permit Central / 01</span><span>Cook County</span></div>
+            <div className="blueprint-kicker"><span>permitnative / 01</span><span>Cook County</span></div>
             <h2 className="blueprint-title">Permit activity</h2>
             <p className="blueprint-line">RESIDENTIAL IMPROVEMENT · LOCAL RECORD</p>
             <div className="plan">
@@ -163,7 +163,7 @@ function LandingPage() {
       <section className="section">
         <div className="section-heading">
           <h2>From permit filing to your next conversation.</h2>
-          <p>Permit Central turns public records into a straightforward daily workflow for independent contractors and local crews.</p>
+          <p>permitnative turns public records into a straightforward daily workflow for independent contractors and local crews.</p>
         </div>
         <div className="steps">
           <article className="step"><span className="step-number">01 / SET YOUR PATCH</span><h3>Pick your trades and ZIPs</h3><p>Tell us the work you take on and the neighborhoods you cover. Your matches stay relevant.</p></article>
@@ -496,11 +496,11 @@ function SettingsPage() {
 }
 
 function SignInPage() {
-  return <div className="auth-wrap"><div className="auth-inner"><div className="auth-brand"><Link href="/" aria-label="Permit Central home"><Brand /></Link></div><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div></div>;
+  return <div className="auth-wrap"><div className="auth-inner"><div className="auth-brand"><Link href="/" aria-label="permitnative home"><Brand /></Link></div><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div></div>;
 }
 
 function SignUpPage() {
-  return <div className="auth-wrap"><div className="auth-inner"><div className="auth-brand"><Link href="/" aria-label="Permit Central home"><Brand /></Link></div><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div></div>;
+  return <div className="auth-wrap"><div className="auth-inner"><div className="auth-brand"><Link href="/" aria-label="permitnative home"><Brand /></Link></div><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div></div>;
 }
 
 function ClerkCacheInvalidator() {

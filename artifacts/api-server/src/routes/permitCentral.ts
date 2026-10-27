@@ -67,7 +67,7 @@ async function requireActiveSubscriber(
     const preferences = await getOrCreatePreferences(userId);
     if (!preferences.stripeCustomerId) {
       res.status(402).json({
-        error: "An active Permit Central subscription is required.",
+        error: "An active permitnative subscription is required.",
         code: "SUBSCRIPTION_REQUIRED",
       });
       return false;
@@ -79,7 +79,7 @@ async function requireActiveSubscriber(
       ACTIVE_SUBSCRIPTION_STATES.has(subscription.status),
     )) {
       res.status(402).json({
-        error: "An active Permit Central subscription is required.",
+        error: "An active permitnative subscription is required.",
         code: "SUBSCRIPTION_REQUIRED",
       });
       return false;

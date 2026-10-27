@@ -164,7 +164,7 @@ async function deliverDigest(
     await sendResendEmail({
       from:
         process.env.PERMIT_CENTRAL_FROM_EMAIL ??
-        "Permit Central <onboarding@resend.dev>",
+        "permitnative <onboarding@resend.dev>",
       to: preference.email,
       subject:
         selected.length > 0
