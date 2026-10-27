@@ -1,5 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { syncChicagoPermits } from "./lib/chicagoPermits";
+import { startDailyPermitJobs } from "./lib/dailyDigests";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +24,12 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  void (async () => {
+    try {
+      await syncChicagoPermits(14);
+    } catch (error) {
+      logger.error({ err: error }, "Initial Chicago permit import failed");
+    }
+    startDailyPermitJobs();
+  })();
 });

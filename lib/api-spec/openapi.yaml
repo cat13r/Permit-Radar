@@ -3,13 +3,19 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Permit Central contractor permit discovery and account services
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: permits
+    description: Chicago building permits
+  - name: account
+    description: Contractor preferences and dashboard
+  - name: billing
+    description: Contractor subscription billing
 paths:
   /healthz:
     get:
@@ -24,6 +30,133 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /permits:
+    get:
+      operationId: listPermits
+      tags: [permits]
+      summary: Browse building permits
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string, maxLength: 120 }
+        - name: trade
+          in: query
+          schema: { $ref: "#/components/schemas/Trade" }
+        - name: zipCode
+          in: query
+          schema: { type: string, pattern: "^[0-9]{5}$" }
+        - name: days
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 30, default: 14 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        "200":
+          description: Matching permit page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermitPage"
+  /permits/{permitNumber}:
+    get:
+      operationId: getPermit
+      tags: [permits]
+      summary: Get a building permit
+      parameters:
+        - name: permitNumber
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Building permit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permit"
+        "404":
+          description: Permit not found
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [account]
+      summary: Get dashboard overview
+      responses:
+        "200":
+          description: Dashboard counts and sync status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /preferences:
+    get:
+      operationId: getPreferences
+      tags: [account]
+      summary: Get contractor preferences
+      responses:
+        "200":
+          description: Contractor preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractorPreferences"
+    put:
+      operationId: updatePreferences
+      tags: [account]
+      summary: Update trade, ZIP code, and digest preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferencesInput"
+      responses:
+        "200":
+          description: Updated contractor preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractorPreferences"
+  /billing/status:
+    get:
+      operationId: getBillingStatus
+      tags: [billing]
+      summary: Get the current subscription status
+      responses:
+        "200":
+          description: Subscription status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingStatus"
+  /billing/checkout:
+    post:
+      operationId: createCheckout
+      tags: [billing]
+      summary: Start a $99 monthly subscription checkout
+      responses:
+        "200":
+          description: Checkout URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutLink"
+  /billing/portal:
+    post:
+      operationId: createBillingPortal
+      tags: [billing]
+      summary: Open the subscription management portal
+      responses:
+        "200":
+          description: Billing portal URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutLink"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +166,99 @@ components:
           type: string
       required:
         - status
+    Trade:
+      type: string
+      enum: [fence, landscaping, pool, gutters, blinds]
+    Permit:
+      type: object
+      properties:
+        permitNumber: { type: string }
+        permitType: { type: string }
+        status: { type: ["string", "null"] }
+        address: { type: string }
+        zipCode: { type: ["string", "null"] }
+        description: { type: ["string", "null"] }
+        issueDate: { type: ["string", "null"], format: date-time }
+        applicationDate: { type: ["string", "null"], format: date-time }
+        reportedCost: { type: ["number", "null"] }
+        latitude: { type: ["number", "null"] }
+        longitude: { type: ["number", "null"] }
+        trades:
+          type: array
+          items: { $ref: "#/components/schemas/Trade" }
+        sourceUrl: { type: string, format: uri }
+      required:
+        - permitNumber
+        - permitType
+        - status
+        - address
+        - zipCode
+        - description
+        - issueDate
+        - applicationDate
+        - reportedCost
+        - latitude
+        - longitude
+        - trades
+        - sourceUrl
+    PermitPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Permit" }
+        total: { type: integer }
+        lastSyncAt: { type: ["string", "null"], format: date-time }
+      required: [items, total, lastSyncAt]
+    DashboardSummary:
+      type: object
+      properties:
+        newPermitsToday: { type: integer }
+        matchingPermits: { type: integer }
+        recentPermits: { type: integer }
+        lastSyncAt: { type: ["string", "null"], format: date-time }
+        digestEnabled: { type: boolean }
+      required: [newPermitsToday, matchingPermits, recentPermits, lastSyncAt, digestEnabled]
+    ContractorPreferences:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        trades:
+          type: array
+          items: { $ref: "#/components/schemas/Trade" }
+        zipCodes:
+          type: array
+          items: { type: string, pattern: "^[0-9]{5}$" }
+        digestEnabled: { type: boolean }
+      required: [email, trades, zipCodes, digestEnabled]
+    PreferencesInput:
+      type: object
+      properties:
+        trades:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: { $ref: "#/components/schemas/Trade" }
+        zipCodes:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items: { type: string, pattern: "^[0-9]{5}$" }
+        digestEnabled: { type: boolean }
+      required: [trades, zipCodes, digestEnabled]
+    BillingStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, trialing, past_due, canceled, incomplete, inactive]
+        active: { type: boolean }
+        currentPeriodEnd: { type: ["string", "null"], format: date-time }
+        cancelAtPeriodEnd: { type: boolean }
+      required: [status, active, currentPeriodEnd, cancelAtPeriodEnd]
+    CheckoutLink:
+      type: object
+      properties:
+        url: { type: string, format: uri }
+      required: [url]
 

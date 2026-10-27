@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Permit Central"
+description = "A mobile-friendly permit lead service for local Chicago contractors. Browse new building permits, filter by ZIP code and trade, manage a daily email digest, and subscribe for $99 per month."
+version = "1.0.0"
+id = "artifacts/permit-central"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24764
+
+[services.development]
+run = "pnpm --filter @workspace/permit-central run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/permit-central", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/permit-central/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24764"
+BASE_PATH = "/"
